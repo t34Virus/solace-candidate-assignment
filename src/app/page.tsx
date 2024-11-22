@@ -69,6 +69,7 @@ export default function Home() {
         />
         <button
           onClick={handleReset}
+          disabled={!searchTerm}
           className="mt-2 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
         >
           Reset
@@ -76,39 +77,51 @@ export default function Home() {
       </div>
 
       {/* Display Search Term */}
-      <p className="mt-4 text-gray-600">
-        Searching for: <span className="font-semibold text-gray-800">{searchTerm || "Nothing"}</span>
-      </p>
+      {searchTerm && (
+        <p className="mt-4 text-gray-600">
+          Searching for: <span className="font-semibold text-gray-800">{searchTerm}</span>
+        </p>
+      )}
 
       {/* Advocates Grid */}
       <div className="mt-8 grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-        {filteredAdvocates.map((advocate, index) => (
-          <div
-            key={index}
-            className="p-4 border border-gray-300 rounded-lg shadow-md hover:shadow-lg hover:-translate-y-1 transition-transform duration-200"
-          >
-            <h3 className="text-lg font-semibold text-gray-800">{`${advocate.firstName || "N/A"} ${advocate.lastName || "N/A"}`}</h3>
-            <p className="text-gray-600 mt-1">{advocate.city || "N/A"}</p>
-            <p className="text-gray-600 mt-1">{advocate.degree || "N/A"}</p>
-            <p className="text-gray-600 mt-1">
-              <span className="font-semibold">Years of Experience:</span>{" "}
-              {advocate.yearsOfExperience || "N/A"}
-            </p>
-            <div className="text-gray-600 mt-1">
-              <span className="font-semibold">Specialties:</span>
-              <ul className="list-disc list-inside">
-                {advocate.specialties.map((specialty, idx) => (
-                  <li key={idx} className="text-gray-600">{specialty}</li>
-                ))}
-              </ul>
-            </div>
-            <p className="text-gray-600 mt-1">
-              <span className="font-semibold">Phone:</span>{" "}
-              {advocate.phoneNumber || "N/A"}
-            </p>
-          </div>
-        ))}
+  {filteredAdvocates.map((advocate, index) => (
+    <div
+      key={index}
+      className="w-64 h-64 border border-gray-300 rounded-lg shadow-md hover:shadow-lg hover:-translate-y-1 transition-transform duration-200 group relative flex flex-col items-center justify-center text-center"
+    >
+      <h3 className="text-base font-semibold text-gray-800">{`${advocate.firstName || "N/A"} ${advocate.lastName || "N/A"}`}</h3>
+      <p className="text-sm text-gray-600">{advocate.city || "N/A"}</p>
+      <p className="text-sm text-gray-600">{advocate.degree || "N/A"}</p>
+      <p className="text-sm text-gray-600">
+        <span className="font-semibold">Experience:</span>{" "}
+        {advocate.yearsOfExperience || "N/A"}
+      </p>
+      <p className="text-sm text-gray-600">
+        <span className="font-semibold">Phone:</span>{" "} 
+        {advocate.phoneNumber || "N/A"}
+      </p>
+      {/* Specialties */}
+      <div className="absolute inset-0 bg-white bg-opacity-95 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 p-4 rounded-lg overflow-hidden">
+        <h3 className="text-base font-semibold text-gray-800">Specialties</h3>
+        <ul className="mt-2 max-h-48 overflow-y-auto w-full">
+          {advocate.specialties.map((specialty, idx) => (
+            <li
+              key={idx}
+              className={`text-sm px-2 py-1 ${
+                idx % 2 === 0 ? "bg-gray-100" : "bg-gray-200"
+              }`}
+            >
+              {specialty}
+            </li>
+          ))}
+        </ul>
       </div>
+    </div>
+  ))}
+</div>
+
+
 
       {/* No Results */}
       {filteredAdvocates.length === 0 && (
