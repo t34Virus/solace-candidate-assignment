@@ -1,45 +1,54 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
+import { Advocate } from "@/types/Advocate";
+import { normalizeString } from "@/utils";
 
 export default function Home() {
-  const [advocates, setAdvocates] = useState([]);
-  const [filteredAdvocates, setFilteredAdvocates] = useState([]);
+  const [advocates, setAdvocates] = useState<Advocate[]>([]);
+  const [filteredAdvocates, setFilteredAdvocates] = useState<Advocate[]>([]);
+  const [searchTerm, setSearchTerm] = useState<string>("");
 
   useEffect(() => {
-    console.log("fetching advocates...");
-    fetch("/api/advocates").then((response) => {
-      response.json().then((jsonResponse) => {
-        setAdvocates(jsonResponse.data);
-        setFilteredAdvocates(jsonResponse.data);
-      });
-    });
+    fetch("/api/advocates")
+      .then((response) => response.json())
+      .then(({ data }: { data: Advocate[] }) => {
+        setAdvocates(data);
+        setFilteredAdvocates(data);
+      })
+      .catch((error) => console.error("Error fetching advocates:", error));
   }, []);
 
-  const onChange = (e) => {
-    const searchTerm = e.target.value;
+  const handleSearch = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const term = e.target.value;
+      setSearchTerm(term);
 
-    document.getElementById("search-term").innerHTML = searchTerm;
+      const filtered = advocates.filter((advocate) => {
+        const searchableContent = [
+          advocate.firstName,
+          advocate.lastName,
+          advocate.city,
+          advocate.degree,
+          advocate.yearsOfExperience,
+          ...advocate.specialties,
+        ]
+          .filter((field): field is string => typeof field === "string" && field !== null)
+          .map(normalizeString)
+          .join(" ");
 
-    console.log("filtering advocates...");
-    const filteredAdvocates = advocates.filter((advocate) => {
-      return (
-        advocate.firstName.includes(searchTerm) ||
-        advocate.lastName.includes(searchTerm) ||
-        advocate.city.includes(searchTerm) ||
-        advocate.degree.includes(searchTerm) ||
-        advocate.specialties.includes(searchTerm) ||
-        advocate.yearsOfExperience.includes(searchTerm)
-      );
-    });
+        return searchableContent.includes(normalizeString(term));
+      });
 
-    setFilteredAdvocates(filteredAdvocates);
-  };
+      setFilteredAdvocates(filtered);
+    },
+    [advocates]
+  );
 
-  const onClick = () => {
-    console.log(advocates);
+  const handleReset = useCallback(() => {
+    setSearchTerm("");
     setFilteredAdvocates(advocates);
-  };
+  }, [advocates]);
 
   return (
     <main style={{ margin: "24px" }}>
@@ -51,8 +60,15 @@ export default function Home() {
         <p>
           Searching for: <span id="search-term"></span>
         </p>
-        <input style={{ border: "1px solid black" }} onChange={onChange} />
-        <button onClick={onClick}>Reset Search</button>
+        <input
+          id="search"
+          type="text"
+          value={searchTerm}
+          onChange={handleSearch}
+          placeholder="Type a keyword (e.g., 'John Doe')..."
+          style={{ border: "1px solid black", width: "25%" }}
+        />
+        <button onClick={handleReset}>Reset</button>
       </div>
       <br />
       <br />
