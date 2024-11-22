@@ -9,6 +9,13 @@
   box-shadow: 5px 4px 3px #1d433947;
 }
 
+.grid {
+  display: grid;
+  gap: 1.5rem; /* Space between grid items */
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); /* Auto adjust columns */
+  grid-auto-rows: 1fr; /* Ensures even row heights */
+}
+
 /* Advocate Card Container */
 .card {
   width: 16rem; 
