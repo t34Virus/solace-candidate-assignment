@@ -1,12 +1,22 @@
-import db from "../../../db";
-import { advocates } from "../../../db/schema";
-import { advocateData } from "../../../db/seed/advocates";
+import { generateAdvocates } from "../../../db/seed/advocates";
 
-export async function GET() {
-  // Uncomment this line to use a database
-  // const data = await db.select().from(advocates);
+export async function GET(request: Request) {
+  const url = new URL(request.url);
+  const page = parseInt(url.searchParams.get("page") || "1", 10);
+  const itemsPerPage = parseInt(url.searchParams.get("itemsPerPage") || "25", 10);
 
-  const data = advocateData;
+  const totalAdvocates = 1500000; 
+  const advocates = generateAdvocates(totalAdvocates);
 
-  return Response.json({ data });
+  const startIndex = (page - 1) * itemsPerPage;
+  const paginatedData = advocates.slice(startIndex, startIndex + itemsPerPage);
+
+  return new Response(
+    JSON.stringify({
+      data: paginatedData,
+      totalItems: totalAdvocates,
+    }),
+    { status: 200, headers: { "Content-Type": "application/json" } }
+  );
 }
+

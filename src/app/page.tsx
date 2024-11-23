@@ -1,91 +1,144 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
+import { Advocate } from "@/types/Advocate";
+import { normalizeString } from "@/utils";
+import Card from "@/components/Card/Card";
+import Logo from "@/components/Logo/Logo";
+import Pagination from "@/components/Pagination/Pagination";
 
 export default function Home() {
-  const [advocates, setAdvocates] = useState([]);
-  const [filteredAdvocates, setFilteredAdvocates] = useState([]);
+  const [advocates, setAdvocates] = useState<Advocate[]>([]);
+  const [filteredAdvocates, setFilteredAdvocates] = useState<Advocate[]>([]);
+  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [itemsPerPage, setItemsPerPage] = useState<number>(25);
+  const [activeCardIndex, setActiveCardIndex] = useState<number | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [totalItems, setTotalItems] = useState<number>(0); // Total number of advocates
+
+  const fetchAdvocates = useCallback(async () => {
+    setLoading(true);
+    try {
+      const response = await fetch(
+        `/api/advocates?page=${currentPage}&itemsPerPage=${itemsPerPage}`
+      );
+      const { data, totalItems }: { data: Advocate[]; totalItems: number } = await response.json();
+      setAdvocates(data);
+      setFilteredAdvocates(data);
+      setTotalItems(totalItems);
+    } catch (error) {
+      console.error("Error fetching advocates:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [currentPage, itemsPerPage]);
 
   useEffect(() => {
-    console.log("fetching advocates...");
-    fetch("/api/advocates").then((response) => {
-      response.json().then((jsonResponse) => {
-        setAdvocates(jsonResponse.data);
-        setFilteredAdvocates(jsonResponse.data);
+    fetchAdvocates();
+  }, [fetchAdvocates]);
+
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const term = e.target.value;
+    setSearchTerm(term);
+    setCurrentPage(1);
+    setActiveCardIndex(null);
+
+    if (term) {
+      const filtered = advocates.filter((advocate) => {
+        const searchableContent = [
+          advocate.firstName,
+          advocate.lastName,
+          advocate.city,
+          advocate.degree,
+          advocate.yearsOfExperience,
+          ...advocate.specialties,
+        ]
+          .filter((field): field is string => typeof field === "string" && field !== null)
+          .map(normalizeString)
+          .join(" ");
+
+        return searchableContent.includes(normalizeString(term));
       });
-    });
-  }, []);
 
-  const onChange = (e) => {
-    const searchTerm = e.target.value;
-
-    document.getElementById("search-term").innerHTML = searchTerm;
-
-    console.log("filtering advocates...");
-    const filteredAdvocates = advocates.filter((advocate) => {
-      return (
-        advocate.firstName.includes(searchTerm) ||
-        advocate.lastName.includes(searchTerm) ||
-        advocate.city.includes(searchTerm) ||
-        advocate.degree.includes(searchTerm) ||
-        advocate.specialties.includes(searchTerm) ||
-        advocate.yearsOfExperience.includes(searchTerm)
-      );
-    });
-
-    setFilteredAdvocates(filteredAdvocates);
+      setFilteredAdvocates(filtered);
+    } else {
+      setFilteredAdvocates(advocates);
+    }
   };
 
-  const onClick = () => {
-    console.log(advocates);
+  const handleReset = () => {
+    setSearchTerm("");
     setFilteredAdvocates(advocates);
+    setCurrentPage(1);
   };
+
+  const handleCardClick = (index: number) => {
+    setActiveCardIndex((prevIndex) => (prevIndex === index ? null : index));
+  };
+
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
 
   return (
-    <main style={{ margin: "24px" }}>
-      <h1>Solace Advocates</h1>
-      <br />
-      <br />
-      <div>
-        <p>Search</p>
-        <p>
-          Searching for: <span id="search-term"></span>
+    <main className="p-6">
+      <Logo />
+
+      <div className="mt-8">
+        <label htmlFor="search" className="block text-gray-600 mb-2">
+          Search Advocates
+        </label>
+        <div className="flex gap-4 items-center">
+          <input
+            id="search"
+            type="text"
+            value={searchTerm}
+            onChange={handleSearch}
+            placeholder="Type a keyword (e.g., 'John Doe')..."
+            className="flex-grow border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+
+          <button
+            onClick={handleReset}
+            disabled={!searchTerm}
+            className="nav_cta-button-new-2 w-button"
+          >
+            Reset
+          </button>
+        </div>
+        <p className="text-gray-600 mt-2">
+          Showing{" "}
+          <span className="font-semibold">{filteredAdvocates.length}</span> of{" "}
+          <span className="font-semibold">{totalItems}</span> results
         </p>
-        <input style={{ border: "1px solid black" }} onChange={onChange} />
-        <button onClick={onClick}>Reset Search</button>
       </div>
-      <br />
-      <br />
-      <table>
-        <thead>
-          <th>First Name</th>
-          <th>Last Name</th>
-          <th>City</th>
-          <th>Degree</th>
-          <th>Specialties</th>
-          <th>Years of Experience</th>
-          <th>Phone Number</th>
-        </thead>
-        <tbody>
-          {filteredAdvocates.map((advocate) => {
-            return (
-              <tr>
-                <td>{advocate.firstName}</td>
-                <td>{advocate.lastName}</td>
-                <td>{advocate.city}</td>
-                <td>{advocate.degree}</td>
-                <td>
-                  {advocate.specialties.map((s) => (
-                    <div>{s}</div>
-                  ))}
-                </td>
-                <td>{advocate.yearsOfExperience}</td>
-                <td>{advocate.phoneNumber}</td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+
+      {loading ? (
+        <p className="mt-4 text-blue-600">Loading advocates...</p>
+      ) : filteredAdvocates.length === 0 ? (
+        <p className="mt-4 text-red-600">No advocates match your search.</p>
+      ) : (
+        <div className="bg-primary mt-8 grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+          {filteredAdvocates.map((advocate, index) => (
+            <Card
+              key={index}
+              advocate={advocate}
+              isActive={index === activeCardIndex}
+              onClick={() => handleCardClick(index)}
+            />
+          ))}
+        </div>
+      )}
+
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+        itemsPerPage={itemsPerPage}
+        onItemsPerPageChange={(items) => {
+          setItemsPerPage(items);
+          setCurrentPage(1);
+        }}
+      />
     </main>
   );
 }
