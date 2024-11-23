@@ -6,11 +6,16 @@ import "./Card.css";
 
 interface CardProps {
   advocate: Advocate;
+  isActive: boolean;
+  onClick: () => void;
 }
 
-const Card: FC<CardProps> = ({ advocate }) => {
+const Card: FC<CardProps> = ({ advocate, isActive, onClick }) => {
   return (
-    <div className="card group relative">
+    <div
+      className={`card group relative ${isActive ? "active" : ""}`}
+      onClick={onClick} 
+    >
       <h3 className="text-base font-semibold text-gray-800">
         {`${advocate.firstName || "N/A"} ${advocate.lastName || "N/A"}`}
       </h3>
@@ -23,8 +28,7 @@ const Card: FC<CardProps> = ({ advocate }) => {
       <p className="text-sm text-gray-600">
         <span className="font-semibold">Phone:</span> {advocate.phoneNumber || "N/A"}
       </p>
-      {/* Specialties */}
-      <div className="card-overlay">
+      <div className={`card-overlay ${isActive ? "visible" : ""}`}>
         <h3 className="text-base font-semibold text-gray-800">Specialties</h3>
         <ul className="specialties-list">
           {advocate.specialties.map((specialty, idx) => (
