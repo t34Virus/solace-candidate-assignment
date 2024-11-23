@@ -1,12 +1,14 @@
 import db from "../../../db";
 import { advocates } from "../../../db/schema";
-import { advocateData } from "../../../db/seed/advocates";
+import { generateAdvocates } from "../../../db/seed/advocates";
 
-export async function GET() {
-  // Uncomment this line to use a database
-  // const data = await db.select().from(advocates);
+export async function GET(request: Request) {
+  const url = new URL(request.url);
+  const count = Number(url.searchParams.get("count")) || 50; 
 
-  const data = advocateData;
+  const data = generateAdvocates(count);
 
-  return Response.json({ data });
+  return new Response(JSON.stringify({ data }), {
+    headers: { "Content-Type": "application/json" },
+  });
 }
