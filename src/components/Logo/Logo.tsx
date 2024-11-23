@@ -16,13 +16,14 @@ export default function Logo() {
       onClick={handleClick}
       aria-label="Go to Solace Health Homepage"
     >
-      <Image
-        src="/logo.svg"
-        alt="Solace Health Logo"
-        width={150} 
-        height={50} 
-        priority={true} 
-      />
+        <Image
+            src="/logo.svg"
+            alt="Solace Health Logo"
+            width={150} 
+            height={50} 
+            style={{ width: 150, height: 50 }}
+            priority
+        />
     </div>
   );
 }
