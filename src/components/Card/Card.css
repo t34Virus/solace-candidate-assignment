@@ -1,0 +1,82 @@
+.bg-primary {
+  object-fit: fill;
+  background-image: linear-gradient(#e9f0ee59, #e9f0ee 33%, #e9f0ee);
+  border-radius: 20px;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 35px 76px 50px;
+  box-shadow: 5px 4px 3px #1d433947;
+}
+
+.grid {
+  display: grid;
+  gap: 1.5rem; 
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); 
+  grid-auto-rows: 1fr; 
+}
+
+.card {
+  width: 16rem;
+  height: 16rem;
+  border: 1px solid #ccc;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  background-color: #fff;
+  overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  cursor: pointer;
+}
+
+.card:hover {
+  transform: translateY(-0.25rem) scale(1.05); 
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15); 
+}
+
+.card-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(255, 255, 255, 0.95);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none; 
+  transition: opacity 0.3s ease;
+}
+
+.card-overlay.visible {
+  opacity: 1;
+  pointer-events: auto; 
+}
+
+.specialties-list {
+  margin-top: 1rem;
+  max-height: 12rem;
+  overflow-y: auto;
+  width: 100%;
+  padding: 0 1rem;
+}
+
+.specialties-item {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+  color: #333;
+}
+
+.specialties-item:nth-child(even) {
+  background-color: #f7f7f7;
+}
+
+.specialties-item:nth-child(odd) {
+  background-color: #ececec;
+}
