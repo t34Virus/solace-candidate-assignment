@@ -8,72 +8,76 @@ import Logo from "@/components/Logo/Logo";
 import Pagination from "@/components/Pagination/Pagination";
 
 export default function Home() {
-  const numberOfAdvocates = 1500;
   const [advocates, setAdvocates] = useState<Advocate[]>([]);
   const [filteredAdvocates, setFilteredAdvocates] = useState<Advocate[]>([]);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [itemsPerPage, setItemsPerPage] = useState<number>(25);
   const [activeCardIndex, setActiveCardIndex] = useState<number | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [totalItems, setTotalItems] = useState<number>(0); // Total number of advocates
+
+  const fetchAdvocates = useCallback(async () => {
+    setLoading(true);
+    try {
+      const response = await fetch(
+        `/api/advocates?page=${currentPage}&itemsPerPage=${itemsPerPage}`
+      );
+      const { data, totalItems }: { data: Advocate[]; totalItems: number } = await response.json();
+      setAdvocates(data);
+      setFilteredAdvocates(data);
+      setTotalItems(totalItems);
+    } catch (error) {
+      console.error("Error fetching advocates:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [currentPage, itemsPerPage]);
 
   useEffect(() => {
-    fetch(`/api/advocates?count=${numberOfAdvocates}`)
-      .then((response) => response.json())
-      .then(({ data }: { data: Advocate[] }) => {
-        setAdvocates(data);
-        setFilteredAdvocates(data);
-      })
-      .catch((error) => console.error("Error fetching advocates:", error));
-  }, []);
+    fetchAdvocates();
+  }, [fetchAdvocates]);
 
-  const handleSearch = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const term = e.target.value;
-      setSearchTerm(term);
-      setCurrentPage(1);
-      setActiveCardIndex(null);
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const term = e.target.value;
+    setSearchTerm(term);
+    setCurrentPage(1);
+    setActiveCardIndex(null);
 
-      if (term) {
-        const filtered = advocates.filter((advocate) => {
-          const searchableContent = [
-            advocate.firstName,
-            advocate.lastName,
-            advocate.city,
-            advocate.degree,
-            advocate.yearsOfExperience,
-            ...advocate.specialties,
-          ]
-            .filter((field): field is string => typeof field === "string" && field !== null)
-            .map(normalizeString)
-            .join(" ");
+    if (term) {
+      const filtered = advocates.filter((advocate) => {
+        const searchableContent = [
+          advocate.firstName,
+          advocate.lastName,
+          advocate.city,
+          advocate.degree,
+          advocate.yearsOfExperience,
+          ...advocate.specialties,
+        ]
+          .filter((field): field is string => typeof field === "string" && field !== null)
+          .map(normalizeString)
+          .join(" ");
 
-          return searchableContent.includes(normalizeString(term));
-        });
+        return searchableContent.includes(normalizeString(term));
+      });
 
-        setFilteredAdvocates(filtered);
-      } else {
-        setFilteredAdvocates(advocates);
-      }
-    },
-    [advocates]
-  );
+      setFilteredAdvocates(filtered);
+    } else {
+      setFilteredAdvocates(advocates);
+    }
+  };
 
-  const handleReset = useCallback(() => {
+  const handleReset = () => {
     setSearchTerm("");
     setFilteredAdvocates(advocates);
     setCurrentPage(1);
-  }, [advocates]);
+  };
 
   const handleCardClick = (index: number) => {
     setActiveCardIndex((prevIndex) => (prevIndex === index ? null : index));
   };
 
-  const paginatedAdvocates = filteredAdvocates.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
-
-  const totalPages = Math.ceil(filteredAdvocates.length / itemsPerPage);
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
 
   return (
     <main className="p-6">
@@ -81,14 +85,7 @@ export default function Home() {
 
       <div className="mt-8">
         <label htmlFor="search" className="block text-gray-600 mb-2">
-          {searchTerm ? (
-            <>
-              Searching for:
-              <span className="font-semibold text-gray-800"> {searchTerm}</span>
-            </>
-          ) : (
-            "Search Advocates"
-          )}
+          Search Advocates
         </label>
         <div className="flex gap-4 items-center">
           <input
@@ -108,18 +105,20 @@ export default function Home() {
             Reset
           </button>
         </div>
-        <p className="text-gray-600">
+        <p className="text-gray-600 mt-2">
           Showing{" "}
-          <span className="font-semibold">{Math.min(itemsPerPage, filteredAdvocates.length)}</span> of{" "}
-          <span className="font-semibold">{filteredAdvocates.length}</span> results
+          <span className="font-semibold">{filteredAdvocates.length}</span> of{" "}
+          <span className="font-semibold">{totalItems}</span> results
         </p>
       </div>
 
-      {filteredAdvocates.length === 0 ? (
+      {loading ? (
+        <p className="mt-4 text-blue-600">Loading advocates...</p>
+      ) : filteredAdvocates.length === 0 ? (
         <p className="mt-4 text-red-600">No advocates match your search.</p>
       ) : (
         <div className="bg-primary mt-8 grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-          {paginatedAdvocates.map((advocate, index) => (
+          {filteredAdvocates.map((advocate, index) => (
             <Card
               key={index}
               advocate={advocate}
